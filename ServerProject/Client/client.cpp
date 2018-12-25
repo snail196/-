@@ -1,10 +1,17 @@
 #define WIN32_LEAN_AND_MEAN
-
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define  _CRT_SECURE_NO_WARNINGS
 #include<windows.h>
 #include<WinSock2.h>
 #include<stdio.h>
 
 #pragma comment(lib,"ws2_32.lib")
+
+struct DataPackage
+{
+	int age;
+	char name[32];
+};
 
 int main()
 {
@@ -58,7 +65,8 @@ int main()
 		int nlen = recv(_sock, recvBuf, 128, 0);
 		if (nlen > 0)
 		{
-			printf("接收到数据：%s \n", recvBuf);
+			DataPackage* dp = (DataPackage*)recvBuf;
+			printf("接收到数据：年龄=%d ，姓名=%s\n", dp->age, dp->name);
 		}
 	}
 	// 7 关闭套节字closesocket

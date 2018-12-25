@@ -1,11 +1,18 @@
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
+
 #include<windows.h>
 #include<WinSock2.h>
 #include<stdio.h>
 
 #pragma comment(lib,"ws2_32.lib")
+
+struct DataPackage
+{
+	int age;
+	char name[32];
+};
 
 int main()
 {
@@ -63,14 +70,10 @@ int main()
 		}
 		printf("收到命令：%s \n", _recvBuf);
 		// 6 处理请求
-		if (0 == strcmp(_recvBuf, "getName"))
+		if (0 == strcmp(_recvBuf, "getInfo"))
 		{
-			char msgBuf[] = "Xiao Qiang.";
-			send(_cSock, msgBuf, strlen(msgBuf) + 1, 0);
-		}else if(0 == strcmp(_recvBuf, "getAge"))
-		{
-			char msgBuf[] = "80.";
-			send(_cSock, msgBuf, strlen(msgBuf) + 1, 0);
+			DataPackage dp = {80,"张国荣"};
+			send(_cSock, (const char*)&dp, sizeof(DataPackage), 0);
 		}
 		else {
 			char msgBuf[] = "???.";
