@@ -15,11 +15,13 @@ enum CMD
 	CMD_LOGOUT_RESULT,
 	CMD_ERROR
 };
+
 struct DataHeader
 {
 	short dataLength;
 	short cmd;
 };
+
 //DataPackage
 struct Login: public DataHeader
 {
@@ -111,21 +113,24 @@ int main()
 
 	while (true)
 	{
-		DataHeader header = {};
+		//缓冲区
+		char szRecv[4096] = {};
 		// 5 接收客户端数据
-		int nLen = recv(_cSock, (char*)&header, sizeof(DataHeader), 0);
+		int nLen = recv(_cSock, szRecv, sizeof(DataHeader), 0);
+		DataHeader* header = (DataHeader*)szRecv;
 		if (nLen <= 0)
 		{
 			printf("客户端已退出，任务结束。");
 			break;
 		}
-		switch (header.cmd)
+		
+		switch (header->cmd)
 		{
 			case CMD_LOGIN:
 				{
-					Login login = {};
-					recv(_cSock, (char*)&login+sizeof(DataHeader), sizeof(Login)-sizeof(DataHeader), 0);
-					printf("收到命令：CMD_LOGIN,数据长度：%d,userName=%s PassWord=%s\n", login.dataLength, login.userName, login.PassWord);
+					recv(_cSock, szRecv +sizeof(DataHeader), header->dataLength-sizeof(DataHeader), 0);
+					Login* login = (Login*)szRecv;
+					printf("收到命令：CMD_LOGIN,数据长度：%d,userName=%s PassWord=%s\n", login->dataLength, login->userName, login->PassWord);
 					//忽略判断用户密码是否正确的过程
 					LoginResult ret;
 					send(_cSock, (char*)&ret, sizeof(LoginResult), 0);
@@ -133,18 +138,19 @@ int main()
 				break;
 			case CMD_LOGOUT:
 				{
-					Logout logout = {};
-					recv(_cSock, (char*)&logout+sizeof(DataHeader), sizeof(logout)- sizeof(DataHeader), 0);
-					printf("收到命令：CMD_LOGOUT,数据长度：%d,userName=%s \n", logout.dataLength, logout.userName);
+					recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
+					Logout* logout = (Logout*)szRecv;
+					printf("收到命令：CMD_LOGOUT,数据长度：%d,userName=%s \n", logout->dataLength, logout->userName);
 					//忽略判断用户密码是否正确的过程
 					LogoutResult ret;
 					send(_cSock, (char*)&ret, sizeof(ret), 0);
 				}
 				break;
-			default:
-				header.cmd = CMD_ERROR;
-				header.dataLength = 0;
-				send(_cSock, (char*)&header, sizeof(header), 0);
+				default:
+				{
+					DataHeader header = { 0,CMD_ERROR };
+					send(_cSock, (char*)&header, sizeof(header), 0);
+				}
 			break;
 		}
 \
